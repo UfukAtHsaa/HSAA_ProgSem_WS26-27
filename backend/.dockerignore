@@ -1,0 +1,11 @@
+target/
+.git/
+.gitattributes
+.gitignore
+HELP.md
+README.md
+.mvn/
+mvnw
+mvnw.cmd
+Dockerfile
+.dockerignore

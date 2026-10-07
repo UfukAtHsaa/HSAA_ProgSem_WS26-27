@@ -1,0 +1,28 @@
+name: hello-angular-spring
+
+services:
+  backend:
+    build:
+      context: ./backend
+    image: hello-angular-spring/backend:local
+    restart: unless-stopped
+    healthcheck:
+      # The JRE-alpine base ships busybox wget, so this checks the real endpoint
+      # instead of adding an actuator dependency just to answer "am I up?".
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/api/hello > /dev/null || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 40s
+
+  frontend:
+    build:
+      context: ./frontend
+    image: hello-angular-spring/frontend:local
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        # nginx resolves "backend" at startup, so it must not boot first.
+        condition: service_healthy
