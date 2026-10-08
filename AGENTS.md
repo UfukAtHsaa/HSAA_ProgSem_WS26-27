@@ -43,5 +43,7 @@ No linter is configured. `frontend/.prettierrc` exists; format with
 - `docker-compose.yml` — service wiring; `backend` is deliberately not published
 - `.opencode/skills/adr/` — ADR skill; it writes records into `docs/adr/`
 - `docs/adr/` — Architecture Decision Records (create on first use)
+- `.opencode/skills/anforderungen/` — Skill `anforderung`; legt User Stories mit Akzeptanzkriterien an
+- `docs/anforderungen/` — Anforderungen, eine Datei pro User Story (create on first use)
 
 Architecture details, conventions and gotchas: see **`CLAUDE.md`**.
