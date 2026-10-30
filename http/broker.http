@@ -1,0 +1,84 @@
+### Broker-Beispiel aus Vorlesung 3: jeder Endpunkt mit Erfolgs- und Fehlerfall.
+### Ausführen in IntelliJ: Umgebung "dev" wählen, dann grüner Pfeil neben der Zeile.
+### Passwörter: http-client.private.env.json.example nach http-client.private.env.json
+### kopieren und die Werte aus eurer .env eintragen. Die Datei ist gitignored.
+### Alles läuft hinter nginx, daher kein Port 8080.
+
+### 1. Wertpapiere ansehen, ohne Login
+### Erwartet: 200, Body mit items, page, size, totalItems, totalPages
+GET {{host}}/api/instruments?page=0&size=2
+
+### 2. Zu große Seite
+### Erwartet: 200 mit höchstens 100 Einträgen (spring.data.web.pageable.max-page-size)
+GET {{host}}/api/instruments?size=1000000
+
+### 3. Einzelnes Wertpapier
+### Erwartet: 200
+GET {{host}}/api/instruments/SAP
+
+### 4. Unbekanntes Wertpapier
+### Erwartet: 404, Body im Format application/problem+json
+GET {{host}}/api/instruments/XYZ
+
+### 5. Order aufgeben als Kundin
+### Erwartet: 201, Header Location zeigt auf die neue Order, Preis vom Server
+POST {{host}}/api/orders
+Authorization: Basic {{kunde}} {{kundePw}}
+Content-Type: application/json
+
+{ "symbol": "SAP", "quantity": 2 }
+
+### 6. Preis mitschicken (Manipulationsversuch)
+### Erwartet: 201, aber der Preis im Body ist der Preis vom Server, nicht 0.01
+POST {{host}}/api/orders
+Authorization: Basic {{kunde}} {{kundePw}}
+Content-Type: application/json
+
+{ "symbol": "SAP", "quantity": 1, "price": 0.01 }
+
+### 7. Ungültige Menge
+### Erwartet: 400, Body mit title, status, detail (Problem Details)
+POST {{host}}/api/orders
+Authorization: Basic {{kunde}} {{kundePw}}
+Content-Type: application/json
+
+{ "symbol": "SAP", "quantity": 0 }
+
+### 8. Unbekanntes Wertpapier bestellen
+### Erwartet: 400
+POST {{host}}/api/orders
+Authorization: Basic {{kunde}} {{kundePw}}
+Content-Type: application/json
+
+{ "symbol": "XYZ", "quantity": 1 }
+
+### 9. Order aufgeben ohne Login
+### Erwartet: 401
+POST {{host}}/api/orders
+Content-Type: application/json
+
+{ "symbol": "SAP", "quantity": 1 }
+
+### 10. Eigene Orders
+### Erwartet: 200, nur Orders von anna@example.org
+GET {{host}}/api/orders
+Authorization: Basic {{kunde}} {{kundePw}}
+
+### 11. Unbekannte Order
+### Erwartet: 404, Problem Details
+GET {{host}}/api/orders/999999
+Authorization: Basic {{kunde}} {{kundePw}}
+
+### 12. Admin-Bereich ohne Login
+### Erwartet: 401
+GET {{host}}/api/admin/orders
+
+### 13. Admin-Bereich als Kundin
+### Erwartet: 403
+GET {{host}}/api/admin/orders
+Authorization: Basic {{kunde}} {{kundePw}}
+
+### 14. Admin-Bereich als Admin, gefiltert nach Symbol
+### Erwartet: 200
+GET {{host}}/api/admin/orders?symbol=SAP&sort=id,desc
+Authorization: Basic {{admin}} {{adminPw}}

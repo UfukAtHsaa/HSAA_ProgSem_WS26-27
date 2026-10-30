@@ -6,14 +6,16 @@ in `AGENTS.md`; Claude Code reads it directly.
 ## What this is
 
 A teaching/demo stack: an Angular single-page app that renders a greeting
-fetched from a Spring Boot REST API, wired together by `docker-compose`.
+fetched from a Spring Boot REST API, wired together by `docker-compose`. The
+backend also holds the broker example from lecture 3 (orders, Spring Data,
+Spring Security with Basic Auth); see the README section "Beispiel aus Vorlesung 3".
 
 | | |
 | --- | --- |
 | Frontend | Angular 22 → static files, served by nginx:80 |
-| Backend | Spring Boot 4.1.1, Java 21, `GET /api/hello` |
-| Database | none |
-| Tests | JUnit (2 tests) + Angular/Vitest |
+| Backend | Spring Boot 4.1.1, Java 21, `GET /api/hello`, broker example under `/api/instruments`, `/api/orders`, `/api/admin/orders` |
+| Database | PostgreSQL 17 (`db` service, volume `db-data`); H2 in memory for tests |
+| Tests | JUnit (11 tests) + Angular/Vitest |
 
 ## Architecture
 
@@ -57,7 +59,9 @@ browser ──▶ nginx :80 ──▶ index.html + hashed JS/CSS
 
 - Images are built the production way. There is **no hot reload** in containers;
   live development means running the side you are editing on the host.
-- Do not add a database service. The project intentionally has none.
+- Secrets (`DB_PASSWORD`, `ADMIN_PASSWORD`, `KUNDE_PASSWORD`) come from `.env`
+  (template `.env.example`, gitignored). Never put a password into the repo.
+- `/api/hello` stays public in `SecurityConfig`: the backend healthcheck uses it.
 
 ## Gotchas
 

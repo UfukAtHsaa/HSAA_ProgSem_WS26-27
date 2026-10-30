@@ -4,14 +4,15 @@ A single-page Angular app that renders a greeting fetched from a Spring Boot RES
 API. One command brings the whole stack up.
 
 - **Frontend** — Angular 22, built to static files and served by nginx
-- **Backend** — Spring Boot 4.1.1 on Java 21, exposing `GET /api/hello`
-- **Database** — none
+- **Backend** — Spring Boot 4.1.1 on Java 21, exposing `GET /api/hello` and the broker example (see below)
+- **Database** — PostgreSQL 17 in a container, data in the named volume `db-data`
 
 ## Quick start
 
 Requires Docker with the Compose plugin (or the standalone `docker-compose`).
 
 ```bash
+cp .env.example .env          # once: local passwords, gitignored
 docker-compose up -d --build
 ```
 
@@ -78,7 +79,7 @@ Both suites run inside the normal builds, so `docker-compose up --build` already
 executes them. To run them on the host:
 
 ```bash
-cd backend  && ./mvnw test              # 2 tests, needs a JDK 21
+cd backend  && ./mvnw test              # 11 tests (H2 in memory), needs a JDK 21
 cd frontend && npm install && npx ng test
 ```
 
@@ -88,7 +89,7 @@ The containers are built the production way, so there is no hot reload. For live
 reload, run each side on the host:
 
 ```bash
-cd backend  && ./mvnw spring-boot:run    # http://localhost:8080
+cd backend  && ./mvnw spring-boot:run    # http://localhost:8080, needs DB_URL, DB_PASSWORD, ADMIN_PASSWORD, KUNDE_PASSWORD
 cd frontend && npm start                 # http://localhost:4200
 ```
 
@@ -99,6 +100,42 @@ cd frontend && npm start                 # http://localhost:4200
 ```
 
 Start it with `npx ng serve --proxy-config proxy.conf.json`.
+
+## Beispiel aus Vorlesung 3: Broker
+
+Ein kleiner Wertpapier-Broker zeigt Spring Web, Spring Data und Spring Security.
+Bewusst kein Shop: Das Muster übertragt ihr selbst auf euer Projekt.
+
+| Folie | Datei |
+| --- | --- |
+| Der Weg eines Requests | `OrderController` → `OrderService` → `OrderRepository` → Postgres |
+| Dependency Injection | Konstruktoren in `OrderService`, `OrderController` (kein `new`) |
+| Controller | `broker/OrderController.java`, `broker/AdminOrderController.java` |
+| Entity und DTO | `broker/Order.java`, `broker/OrderDto.java`, `broker/CreateOrderRequest.java` |
+| Repository und Pageable | `broker/OrderRepository.java`, `broker/PageResponse.java` |
+| Fehlerformat (404, 400) | `broker/NotFoundException.java`, `broker/ApiExceptionHandler.java` |
+| Security-Filter | `security/SecurityConfig.java` |
+| Benutzer und Passwort-Hash | `security/AppUser.java`, `security/DbUserDetailsService.java` |
+| Beispieldaten | `broker/DemoData.java` (Passwörter aus `.env`) |
+| Drei Aufrufe beweisen die Sperre | `http/broker.http`, `BrokerApiTests.java` |
+| Test ohne Spring | `OrderServiceTests.java` (Mocks über den Konstruktor) |
+| ADRs und Anforderungen | `docs/adr/`, `docs/anforderungen/` |
+
+Java-Dateien liegen unter `backend/src/main/java/com/example/hello/`.
+
+Zugänge nach dem Start (Passwörter aus eurer `.env`):
+
+| Rolle | E-Mail |
+| --- | --- |
+| Admin | `admin@broker.local` |
+| Kundin | `anna@example.org` |
+
+Die Beispieldaten werden nur beim ersten Start angelegt. Wer die Passwörter in
+der `.env` ändert, muss die Datenbank neu anlegen: `docker-compose down -v`.
+
+Für `http/broker.http`: `http/http-client.private.env.json.example` nach
+`http/http-client.private.env.json` kopieren und die Passwörter aus der `.env`
+eintragen.
 
 ## Corporate TLS interception
 

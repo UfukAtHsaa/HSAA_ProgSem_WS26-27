@@ -1,11 +1,35 @@
 name: hello-angular-spring
 
 services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: broker
+      POSTGRES_USER: broker
+      # Kommt aus der .env (Vorlage: .env.example). Nie ins Repo schreiben.
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD fehlt, bitte .env.example nach .env kopieren}
+    volumes:
+      # Benanntes Volume: Daten überstehen docker-compose down und Neustarts.
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U broker -d broker"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
   backend:
     build:
       context: ./backend
     image: hello-angular-spring/backend:local
     restart: unless-stopped
+    environment:
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD fehlt}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD fehlt}
+      KUNDE_PASSWORD: ${KUNDE_PASSWORD:?KUNDE_PASSWORD fehlt}
+    depends_on:
+      db:
+        condition: service_healthy
     healthcheck:
       # The JRE-alpine base ships busybox wget, so this checks the real endpoint
       # instead of adding an actuator dependency just to answer "am I up?".
@@ -26,3 +50,6 @@ services:
       backend:
         # nginx resolves "backend" at startup, so it must not boot first.
         condition: service_healthy
+
+volumes:
+  db-data:
