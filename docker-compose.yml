@@ -27,6 +27,8 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD fehlt}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD fehlt}
       KUNDE_PASSWORD: ${KUNDE_PASSWORD:?KUNDE_PASSWORD fehlt}
+      # Externe Wechselkurs-API. Zum Vorführen "API ist weg": FX_API_URL=http://nirgendwo.invalid in die .env
+      FX_API_URL: ${FX_API_URL:-https://api.frankfurter.dev}
     depends_on:
       db:
         condition: service_healthy

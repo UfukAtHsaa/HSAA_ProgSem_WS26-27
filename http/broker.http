@@ -82,3 +82,21 @@ Authorization: Basic {{kunde}} {{kundePw}}
 ### Erwartet: 200
 GET {{host}}/api/admin/orders?symbol=SAP&sort=id,desc
 Authorization: Basic {{admin}} {{adminPw}}
+
+### ---------- Vorlesung 5: externe API ----------
+
+### 15. Preis in Dollar (Kurs von api.frankfurter.dev)
+### Erwartet: 200, price umgerechnet, rateAvailable true
+GET {{host}}/api/instruments/SAP/quote?currency=USD
+
+### 16. Preis in Franken
+### Erwartet: 200
+GET {{host}}/api/instruments/SIE/quote?currency=CHF
+
+### 17. Ungültige Währung
+### Erwartet: 400, Problem Details
+GET {{host}}/api/instruments/SAP/quote?currency=US
+
+### 18. API weg: in der .env FX_API_URL=http://nirgendwo.invalid setzen, docker-compose up -d, dann nochmal 15
+### Erwartet: 200, price null, rateAvailable false
+GET {{host}}/api/instruments/SAP/quote?currency=USD

@@ -41,6 +41,9 @@ RUN addgroup -S spring && adduser -S spring -G spring \
 USER spring:spring
 
 COPY --from=build /workspace/target/hello-*.jar /app/hello.jar
+# Same truststore as the build, so calls to external APIs (Vorlesung 5) also work
+# behind a TLS-intercepting proxy. Without extra certs this is the stock file.
+COPY --from=build /opt/java/openjdk/lib/security/cacerts /opt/java/openjdk/lib/security/cacerts
 
 EXPOSE 8080
 

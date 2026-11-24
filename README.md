@@ -79,7 +79,7 @@ Both suites run inside the normal builds, so `docker-compose up --build` already
 executes them. To run them on the host:
 
 ```bash
-cd backend  && ./mvnw test              # 11 tests (H2 in memory), needs a JDK 21
+cd backend  && ./mvnw verify            # 27 tests + coverage report in target/site/jacoco/index.html (H2 in memory), needs a JDK 21
 cd frontend && npm install && npx ng test
 ```
 
@@ -137,12 +137,43 @@ Für `http/broker.http`: `http/http-client.private.env.json.example` nach
 `http/http-client.private.env.json` kopieren und die Passwörter aus der `.env`
 eintragen.
 
+## Beispiel aus Vorlesung 5: externe API und Tests
+
+Der Broker zeigt Preise auch in anderen Währungen. Die Kurse kommen von der
+kostenlosen [Frankfurter-API](https://frankfurter.dev) (EZB-Kurse, kein Key).
+Fällt sie aus oder ist sie langsam, antwortet der Broker trotzdem, nur ohne
+umgerechneten Preis.
+
+```bash
+curl "http://localhost/api/instruments/SAP/quote?currency=USD"
+```
+
+| Thema | Datei |
+| --- | --- |
+| Fremde API als Interface (wie Feign, ohne Spring Cloud) | `exchangerate/FrankfurterClient.java` |
+| Antwortformat der fremden API | `exchangerate/FrankfurterRates.java` |
+| Spring baut den Client | `exchangerate/HttpClientConfig.java` |
+| Adresse und Timeouts | `application.properties` (`spring.http.serviceclient.frankfurter.*`) |
+| Fehler abfangen, Fallback | `exchangerate/ExchangeRateService.java` |
+| Fachlogik (Umrechnen, Runden, Prüfen) | `broker/QuoteService.java` |
+| Endpunkt | `broker/InstrumentController.java` (`/{symbol}/quote`) |
+| Unit-Tests mit Mockito, je Akzeptanzkriterium | `QuoteServiceTests.java`, `ExchangeRateServiceTests.java` |
+| Integrationstest mit Fake-API (ok, 500, zu langsam) | `QuoteApiTests.java`, `FakeFrankfurterApi.java` |
+| Test Coverage | `pom.xml` (JaCoCo), `./mvnw verify` |
+| Anforderung und ADR | `docs/anforderungen/0002-...`, `docs/adr/0003-...` |
+| Aufrufe zum Ausprobieren | `http/broker.http`, Nr. 15 bis 18 |
+
+**API-Ausfall vorführen:** In der `.env` `FX_API_URL=http://nirgendwo.invalid`
+setzen und `docker-compose up -d --wait` (ganzer Stack, sonst kennt nginx das neue
+Backend nicht). Danach liefert `/quote` 200 mit `rateAvailable: false`.
+
 ## Corporate TLS interception
 
 If your network re-signs HTTPS, Maven Central arrives with your proxy CA's
 certificate and the backend build fails with `PKIX path building failed`. Export
 your root CA into `backend/docker/certs/` as `.pem` — the `Dockerfile` imports
-everything found there into the JVM truststore before Maven runs.
+everything found there into the JVM truststore before Maven runs, and copies that
+truststore into the runtime image so calls to external APIs work too.
 
 The directory is committed empty and `*.pem` is gitignored, so on an unproxied
 network this is a no-op with full certificate verification. Never commit a

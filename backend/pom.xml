@@ -12,7 +12,7 @@
 	<artifactId>hello</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>hello</name>
-	<description>Hello World API und Broker-Beispiel aus Vorlesung 3</description>
+	<description>Hello World API und Broker-Beispiel aus Vorlesung 3 und 5</description>
 	<properties>
 		<java.version>21</java.version>
 	</properties>
@@ -25,6 +25,11 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-validation</artifactId>
+		</dependency>
+		<!-- HTTP-Client für externe APIs (RestClient, HTTP Interfaces), Vorlesung 5 -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-restclient</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -68,6 +73,26 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<!-- Test Coverage: ./mvnw verify, Bericht unter target/site/jacoco/index.html -->
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.8.16</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>report</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
