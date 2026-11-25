@@ -167,6 +167,22 @@ curl "http://localhost/api/instruments/SAP/quote?currency=USD"
 setzen und `docker-compose up -d --wait` (ganzer Stack, sonst kennt nginx das neue
 Backend nicht). Danach liefert `/quote` 200 mit `rateAvailable: false`.
 
+### Demo: Code kaputt machen, Test wird rot
+
+Jede Stelle ist im Code mit `DEMO n` markiert. Eine Zeile umschalten, Tests
+laufen lassen (IntelliJ: Rechtsklick auf `src/test/java` → Run Tests, oder
+`./mvnw test`), danach zurückdrehen.
+
+| Nr. | Wo | Was ändern | Was rot wird | Botschaft |
+| --- | --- | --- | --- | --- |
+| 1 | `ExchangeRateService` | `return Optional.empty();` aus-, `throw e;` einkommentieren | `QuoteApiTests` (500, zu langsam), `ExchangeRateServiceTests` | Ohne Fallback reißt die fremde API den Shop mit (H2) |
+| 2 | `QuoteService.convert` | `setScale`-Zeile auskommentieren | nur `QuoteServiceTests` AK1 | Der Integrationstest merkt es nicht (231.40 × 1.1 ist zufällig glatt). Erst der Unit-Test mit krummem Kurs findet den Fehler |
+| 3 | `QuoteService.normalizeCurrency` | `requireCurrencyCode(code);` auskommentieren | 5 × AK3 (parametrisiert) und `quote_invalidCurrency_is400` | Ein Testfall pro ungültiger Eingabe, jeder einzeln im Bericht |
+| 4 | `src/test/resources/application.properties` | `read-timeout` auskommentieren | `quote_apiTooSlow_givesUpAfterTimeout` | Ohne Timeout wartet der Shop, bis die API antwortet (hier 3 s) |
+
+Live im Browser statt im Test: Demo 1 umschalten, `docker-compose up -d --build --wait`
+mit `FX_API_URL=http://nirgendwo.invalid` in der `.env`, dann `/quote` aufrufen: 500 statt 200.
+
 ## Corporate TLS interception
 
 If your network re-signs HTTPS, Maven Central arrives with your proxy CA's
