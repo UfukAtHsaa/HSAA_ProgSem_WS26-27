@@ -38,13 +38,21 @@ public class QuoteService {
 
 	private static String normalizeCurrency(String currency) {
 		String code = currency == null ? "" : currency.trim().toUpperCase(Locale.ROOT);
-		if (!code.matches("[A-Z]{3}")) {
-			throw new IllegalArgumentException("Währung muss ein Code aus drei Buchstaben sein, z. B. USD.");
-		}
+		// DEMO 3: Zeile auskommentieren -> QuoteServiceTests (AK3) und QuoteApiTests werden rot.
+		requireCurrencyCode(code);
 		return code;
 	}
 
+	private static void requireCurrencyCode(String code) {
+		if (!code.matches("[A-Z]{3}")) {
+			throw new IllegalArgumentException("Währung muss ein Code aus drei Buchstaben sein, z. B. USD.");
+		}
+	}
+
 	private static BigDecimal convert(BigDecimal amount, BigDecimal rate) {
-		return amount.multiply(rate).setScale(2, RoundingMode.HALF_UP);
+		BigDecimal result = amount.multiply(rate);
+		// DEMO 2: Zeile auskommentieren -> der Unit-Test für AK1 wird rot. Der Integrationstest nicht. Warum?
+		result = result.setScale(2, RoundingMode.HALF_UP);
+		return result;
 	}
 }

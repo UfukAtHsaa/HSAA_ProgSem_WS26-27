@@ -35,7 +35,10 @@ public class ExchangeRateService {
 		catch (RestClientException e) {
 			// Timeout, API down, 4xx/5xx: alles landet hier. Loggen, aber den Shop nicht abstürzen lassen.
 			log.warn("Wechselkurs {} -> {} nicht verfügbar: {}", from, to, e.getMessage());
+			// DEMO 1: Fallback abschalten. return auskommentieren und throw einkommentieren.
+			// Dann wird jeder API-Fehler zu einer 500 im Shop, und QuoteApiTests zeigt es.
 			return Optional.empty();
+			// throw e;
 		}
 	}
 }
