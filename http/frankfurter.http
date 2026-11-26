@@ -1,0 +1,45 @@
+### Vorlesung 5: die fremde API direkt aufrufen, ohne unseren Broker.
+### Genau diese Requests schickt FrankfurterClient ab, wenn der Broker einen Kurs braucht.
+### Ausführen in IntelliJ: grüner Pfeil neben der Zeile. Keine Umgebung, kein Login, kein Key nötig.
+###
+### So wird aus dem Java-Interface ein Request:
+###
+###   base-url (application.properties)   https://api.frankfurter.dev
+###   @HttpExchange("/v1")                 + /v1
+###   @GetExchange("/latest")              + /latest
+###   @RequestParam String base            ?base=EUR
+###   @RequestParam String symbols         &symbols=USD
+###
+###   Aufruf im Code: client.latest("EUR", "USD")
+
+### 1. Kurs Euro -> Dollar, so wie ExchangeRateService ihn holt
+### Erwartet: 200, {"amount":1.0,"base":"EUR","date":"…","rates":{"USD":…}}
+### Das JSON wird 1:1 zum Record FrankfurterRates(amount, base, date, rates).
+GET https://api.frankfurter.dev/v1/latest?base=EUR&symbols=USD
+Accept: application/json
+
+### 2. Mehrere Währungen auf einmal
+### Erwartet: 200, rates mit CHF und USD. Brauchen wir im Broker nicht, zeigt aber, was die API kann.
+GET https://api.frankfurter.dev/v1/latest?base=EUR&symbols=USD,CHF
+Accept: application/json
+
+### 3. Welche Währungen gibt es?
+### Erwartet: 200, Liste Kürzel -> Name
+GET https://api.frankfurter.dev/v1/currencies
+Accept: application/json
+
+### 4. Unbekannte Währung
+### Erwartet: 404 {"message":"not found"}
+### Im Java-Code wird daraus eine HttpClientErrorException (Unterklasse von RestClientException).
+### ExchangeRateService fängt sie, der Broker antwortet trotzdem 200 mit rateAvailable false.
+GET https://api.frankfurter.dev/v1/latest?base=EUR&symbols=XYZ
+Accept: application/json
+
+### 5. Pfad falsch (ohne /v1), typischer Tippfehler beim @HttpExchange
+### Erwartet: 404 {"status":404,"message":"not found"}
+GET https://api.frankfurter.dev/latest?base=EUR&symbols=USD
+Accept: application/json
+
+### Zum Vergleich: derselbe Kurs über unseren Broker (Stack muss laufen, siehe broker.http Nr. 15)
+### Erwartet: 200, priceEur, price = priceEur × Kurs aus Nr. 1, auf Cent gerundet
+GET http://localhost/api/instruments/SAP/quote?currency=USD

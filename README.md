@@ -162,6 +162,7 @@ curl "http://localhost/api/instruments/SAP/quote?currency=USD"
 | Test Coverage | `pom.xml` (JaCoCo), `./mvnw verify` |
 | Anforderung und ADR | `docs/anforderungen/0002-...`, `docs/adr/0003-...` |
 | Aufrufe zum Ausprobieren | `http/broker.http`, Nr. 15 bis 18 |
+| Die fremde API direkt aufrufen (was der Client abschickt) | `http/frankfurter.http` |
 
 **API-Ausfall vorführen:** In der `.env` `FX_API_URL=http://nirgendwo.invalid`
 setzen und `docker-compose up -d --wait` (ganzer Stack, sonst kennt nginx das neue
